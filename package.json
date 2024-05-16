@@ -1,0 +1,15 @@
+{
+  "name": "backend-2.0",
+  "version": "1.0.0",
+  "description": "backend full stack web-app Project..",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": [
+    "javascript"
+  ],
+  "author": "Muhammmad Husnain Rashid",
+  "license": "ISC"
+}
