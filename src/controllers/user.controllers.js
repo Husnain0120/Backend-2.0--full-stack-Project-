@@ -315,6 +315,88 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, user, "Cover image updated successfully"));
 });
 
+// Function to show subcriber on profile
+const getChannelProfile = asyncHandler(async (req, res) => {
+  // Extract username from the request parameters
+  const { username } = req.params;
+
+  // Validation - check if username is provided and not empty
+  if (!username?.trim()) {
+    throw new ApiError(400, "Username is missing");
+  }
+
+  // Aggregate the channel profile information
+  const channel = await User.aggregate([
+    // Match the user by the provided username (case-insensitive)
+    {
+      $match: {
+        username: username?.toLowerCase()
+      }
+    },
+    // Lookup the subscribers of the channel
+    {
+      $lookup: {
+        from: "subscription",
+        localField: "_id",
+        foreignField: "channel",
+        as: "subscribers"
+      }
+    },
+    // Lookup the channels that the user is subscribed to
+    {
+      $lookup: {
+        from: "subscription",
+        localField: "_id",
+        foreignField: "subscribers",
+        as: "subscribersTo"
+      }
+    },
+    // Add fields for subscriber counts and subscription status
+    {
+      $addFields: {
+        subscribersCount: {
+          $size: "$subscribers"
+        },
+        channelsSubscribedToCount: {
+          $size: "$subscribersTo"
+        },
+        isSubscribed: {
+          $cond: {
+            if: { $in: [req.user?._id, "$subscribers.$subscribers"] },
+            then: true,
+            else: false,
+          }
+        }
+      }
+    },
+    // Project only the necessary fields for the response
+    {
+      $project: {
+        fullname: 1,
+        username: 1,
+        subscribersCount: 1,
+        channelsSubscribedToCount: 1,
+        isSubscribed: 1,
+        avatar: 1,
+        coverImage: 1,
+        email: 1
+      }
+    }
+  ]);
+
+  // Validation - check if channel exists
+  if (!channel?.length) {
+    throw new ApiError(400, "Channel doesn't exist");
+  }
+
+  // Return response with the channel profile data
+  return res
+    .status(200)
+    .json(new ApiResponse(200, channel[0], "User channel fetched successfully"));
+});
+
+
+
 // Export functions for use in other parts of the application
 export {
   registerUser,
@@ -326,4 +408,5 @@ export {
   updateAccountDetails,
   updateUserAvatar,
   updateUserCoverImage,
+  getChannelProfile
 };
