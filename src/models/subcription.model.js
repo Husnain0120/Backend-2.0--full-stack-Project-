@@ -5,7 +5,7 @@ const subscriptionSchema = new Schema(
   {
     // Reference to the user who is subscribing
     subscriber: {
-      type: Schema.Types.ObjectId,
+      type: Schema.Types.ObjectId, 
       ref: "User",
       required: true // Add required to ensure this field is always provided
     },
